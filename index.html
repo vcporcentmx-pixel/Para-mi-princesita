@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buenas noches, mi princesa 👑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noche-1: #241b45;
+    --noche-2: #3a2c66;
+    --noche-3: #513a7a;
+    --luna: #ffe9b0;
+    --estrella: #fff3d1;
+    --lila: #c9a8ff;
+    --rosa: #ff9ecb;
+    --texto: #fdf6ec;
+    --texto-suave: #cbb9e8;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--noche-1);
+  }
+
+  #juego {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: radial-gradient(ellipse at 50% 15%, var(--noche-3), var(--noche-1) 75%);
+    color: var(--texto);
+    overflow: hidden;
+  }
+
+  /* ---------- Progreso ---------- */
+  #progreso {
+    position: absolute;
+    top: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 30;
+  }
+  .punto {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    transition: background 0.4s ease, transform 0.4s ease;
+  }
+  .punto.activo { background: var(--luna); transform: scale(1.3); }
+  .punto.hecho { background: var(--lila); }
+
+  /* ---------- Escenas ---------- */
+  .escena {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 90px 24px 40px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .escena.activa { display: flex; opacity: 1; }
+
+  .escena h2 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: clamp(20px, 4.2vw, 30px);
+    margin: 0 0 8px;
+  }
+  .escena p.instr {
+    color: var(--texto-suave);
+    font-size: clamp(13px, 2.8vw, 16px);
+    margin: 0 0 30px;
+  }
+
+  /* ---------- Estrellas de fondo (todas las escenas) ---------- */
+  #estrellas-fondo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .estrella-fija {
+    position: absolute;
+    background: var(--estrella);
+    border-radius: 50%;
+    animation: parpadeo 3s ease-in-out infinite;
+  }
+  @keyframes parpadeo { 0%,100% { opacity: 0.2; } 50% { opacity: 0.9; } }
+
+  /* ---------- Escena 0: intro ---------- */
+  .luna-grande {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff8e0, var(--luna) 70%);
+    box-shadow: 0 0 70px 18px rgba(255, 233, 176, 0.35);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin-bottom: 26px;
+  }
+  .luna-grande:active { transform: scale(0.92); }
+
+  /* ---------- Escena luces ---------- */
+  .fila-focos { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 360px; }
+  .foco {
+    font-size: 42px;
+    cursor: pointer;
+    filter: drop-shadow(0 0 12px rgba(255, 233, 176, 0.7));
+    transition: filter 0.4s ease, opacity 0.4s ease, transform 0.3s ease;
+  }
+  .foco.apagado {
+    filter: none;
+    opacity: 0.25;
+    transform: scale(0.9);
+  }
+
+  /* ---------- Escena cortinas ---------- */
+  .ventana {
+    position: relative;
+    width: 240px;
+    height: 180px;
+    background: linear-gradient(180deg, #2b2160, #423a7a);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 6px solid #6b5aa6;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .cortina {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(180deg, var(--rosa), #c76a9a);
+    transition: transform 1s cubic-bezier(.65,0,.35,1);
+    box-shadow: inset -6px 0 10px rgba(0,0,0,0.15);
+  }
+  .cortina-izq { left: 0; transform: translateX(-100%); }
+  .cortina-der { right: 0; transform: translateX(100%); }
+  .cortina-izq.cerrada { transform: translateX(0); }
+  .cortina-der.cerrada { transform: translateX(0); }
+
+  /* ---------- Escena mascotas ---------- */
+  .zona-mascotas {
+    display: flex;
+    gap: 22px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 360px;
+  }
+  .mascota {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 46px;
+    cursor: pointer;
+    transition: transform 0.5s cubic-bezier(.34,1.56,.64,1), opacity 0.5s ease;
+  }
+  .mascota span {
+    font-size: 12px;
+    color: var(--texto-suave);
+    margin-top: 4px;
+    font-family: 'Nunito Sans', sans-serif;
+  }
+  .mascota.arropado {
+    transform: translateY(50px) scale(0.7);
+    opacity: 0.35;
+  }
+
+  /* ---------- Escena peluches ---------- */
+  .zona-peluches {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 340px;
+  }
+  .peluche {
+    font-size: 46px;
+    cursor: pointer;
+    transition: transform 0.5s cubic-bezier(.34,1.56,.64,1), opacity 0.5s ease;
+  }
+  .peluche.arropado {
+    transform: translateY(60px) scale(0.7);
+    opacity: 0.35;
+  }
+  .camita {
+    font-size: 30px;
+    opacity: 0.6;
+  }
+
+  /* ---------- Escena ovejitas ---------- */
+  #cerca-ovejas {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    height: 120px;
+    margin-bottom: 10px;
+  }
+  .oveja {
+    position: absolute;
+    bottom: 10px;
+    font-size: 40px;
+    cursor: pointer;
+    animation: salto 1.6s ease-in-out infinite;
+  }
+  @keyframes salto {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-30px); }
+  }
+  .oveja.contada {
+    animation: none;
+    opacity: 0.15;
+    pointer-events: none;
+    transform: translateY(0);
+  }
+  #contador-ovejas {
+    font-size: 14px;
+    color: var(--texto-suave);
+  }
+
+  /* ---------- Escena final ---------- */
+  #escena-final h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: clamp(26px, 6vw, 46px);
+    margin: 0 0 18px;
+    color: var(--texto);
+  }
+  #escena-final p {
+    font-size: clamp(15px, 3vw, 19px);
+    max-width: 480px;
+    line-height: 1.8;
+    color: var(--texto-suave);
+    margin: 0 auto;
+  }
+  #escena-final .firma {
+    margin-top: 24px;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--rosa);
+    font-size: clamp(17px, 3.2vw, 22px);
+  }
+  .corona-final { font-size: 54px; margin-bottom: 18px; }
+
+  /* ---------- Personaje con rulos (escena final) ---------- */
+  .personaje-final {
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .zzz {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--lila);
+    opacity: 0;
+    animation: flotar-zzz 3s ease-in infinite;
+  }
+  .zzz:nth-child(1) { font-size: 14px; animation-delay: 0s; }
+  .zzz:nth-child(2) { font-size: 18px; right: -16px; top: -18px; animation-delay: 0.6s; }
+  .zzz:nth-child(3) { font-size: 22px; right: -28px; top: -32px; animation-delay: 1.2s; }
+  @keyframes flotar-zzz {
+    0% { opacity: 0; transform: translateY(0); }
+    30% { opacity: 0.9; }
+    100% { opacity: 0; transform: translateY(-24px); }
+  }
+
+  .estrella-caida {
+    position: absolute;
+    top: -20px;
+    z-index: 25;
+    pointer-events: none;
+    animation: caer linear forwards;
+    font-size: 16px;
+  }
+  @keyframes caer { to { transform: translateY(110vh) rotate(200deg); opacity: 0; } }
+
+  button.continuar {
+    margin-top: 34px;
+    background: linear-gradient(135deg, var(--lila), var(--rosa));
+    border: none;
+    color: #2a1b45;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 26px;
+    border-radius: 30px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.2s ease;
+  }
+  button.continuar.visible { opacity: 1; pointer-events: auto; }
+  button.continuar:active { transform: scale(0.95); }
+</style>
+</head>
+<body>
+
+<div id="juego">
+  <div id="estrellas-fondo"></div>
+
+  <div id="progreso">
+    <div class="punto" data-i="0"></div>
+    <div class="punto" data-i="1"></div>
+    <div class="punto" data-i="2"></div>
+    <div class="punto" data-i="3"></div>
+    <div class="punto" data-i="4"></div>
+    <div class="punto" data-i="5"></div>
+    <div class="punto" data-i="6"></div>
+  </div>
+
+  <!-- Escena 0: intro -->
+  <section class="escena" id="escena-0">
+    <h2 id="titulo-intro">Prepararemos tu noche, princesa</h2>
+    <p class="instr">Toca la luna para comenzar</p>
+    <div class="luna-grande" id="luna-inicio"></div>
+  </section>
+
+  <!-- Escena 1: luces -->
+  <section class="escena" id="escena-1">
+    <h2>Apaga las luces</h2>
+    <p class="instr">Toca cada foco para apagarlo</p>
+    <div class="fila-focos" id="fila-focos">
+      <div class="foco">💡</div>
+      <div class="foco">💡</div>
+      <div class="foco">💡</div>
+      <div class="foco">💡</div>
+      <div class="foco">💡</div>
+    </div>
+  </section>
+
+  <!-- Escena 2: cortinas -->
+  <section class="escena" id="escena-2">
+    <h2>Cierra la ventana</h2>
+    <p class="instr">Toca la ventana para correr las cortinas</p>
+    <div class="ventana" id="ventana">
+      <div class="cortina cortina-izq"></div>
+      <div class="cortina cortina-der"></div>
+    </div>
+  </section>
+
+  <!-- Escena 3: gatos -->
+  <section class="escena" id="escena-3">
+    <h2>Despide a tus gatitos</h2>
+    <p class="instr">Toca a cada uno para arroparlo</p>
+    <div class="zona-mascotas" id="zona-gatos">
+      <div class="mascota">🐱<span>Tigri</span></div>
+      <div class="mascota">🐈<span>Tilim</span></div>
+      <div class="mascota">🐈‍⬛<span>Nerito</span></div>
+    </div>
+  </section>
+
+  <!-- Escena 4: perros -->
+  <section class="escena" id="escena-4">
+    <h2>Despide a tus perritos</h2>
+    <p class="instr">Toca a cada uno para arroparlo</p>
+    <div class="zona-mascotas" id="zona-perros">
+      <div class="mascota">🐶<span>Bizcocho</span></div>
+      <div class="mascota">🐕<span>Rodolfo</span></div>
+    </div>
+  </section>
+
+  <!-- Escena 5: peluches -->
+  <section class="escena" id="escena-5">
+    <h2>Arropa a tus peluches</h2>
+    <p class="instr">Toca cada uno para llevarlo a la cama</p>
+    <div class="zona-peluches" id="zona-peluches">
+      <div class="peluche">🧸</div>
+      <div class="peluche">🐰</div>
+      <div class="peluche">🦄</div>
+    </div>
+    <div class="camita">🛏️</div>
+  </section>
+
+  <!-- Escena 6: ovejitas -->
+  <section class="escena" id="escena-6">
+    <h2>Cuenta las ovejitas</h2>
+    <p class="instr">Toca cada oveja que salte la cerca</p>
+    <div id="cerca-ovejas"></div>
+    <div id="contador-ovejas">0 de 8</div>
+  </section>
+
+  <!-- Escena final -->
+  <section class="escena" id="escena-final">
+    <div class="personaje-final" id="personaje-final"></div>
+    <h1>Buenas noches, mi princesa</h1>
+    <p id="mensaje-final"></p>
+    <div class="firma" id="firma-final"></div>
+  </section>
+
+  <button class="continuar" id="btn-continuar">Continuar ✨</button>
+</div>
+
+<!--
+  Música de fondo cargada desde GitHub (enlace "raw" del archivo).
+-->
+<audio id="musica-fondo" src="https://raw.githubusercontent.com/vcporcentmx-pixel/Te-amo-y-mas/c8d03f8e91c63c173b57b01df4342338c76c2842/Te%20Amo%20y%20M%C3%A1s.mp3" loop preload="auto"></audio>
+
+<script>
+  // ======= PERSONALIZA AQUÍ =======
+  const NOMBRE_ELLA = "Valy";
+  const NOMBRE_EL = "Vito";
+  const MENSAJE_FINAL = `Ya está todo listo: las luces apagadas, la ventana cerrada, Tigri, Tilim, Nerito, Bizcocho y Rodolfo despedidos con cariño, tus peluches arropados y las ovejitas contadas. Ahora solo falta una cosa: que te abrigues bien, que te pongas cómoda, y que cierres esos ojos tranquila. Ojalá sueñes bonito, ojalá sueñes conmigo. Descansa mucho, mi princesa, mañana será un día mejor si es contigo. Te amo.`;
+  // =================================
+
+  document.getElementById('titulo-intro').textContent = `Prepararemos tu noche, ${NOMBRE_ELLA}`;
+  document.getElementById('mensaje-final').textContent = MENSAJE_FINAL;
+  document.getElementById('firma-final').textContent = `— ${NOMBRE_EL}`;
+
+  // Personaje dormido con rulos, para la escena final
+  document.getElementById('personaje-final').innerHTML = `
+    <svg viewBox="0 0 200 170" width="190" height="160">
+      <!-- Almohada -->
+      <ellipse cx="100" cy="128" rx="78" ry="26" fill="#e9def7" />
+      <!-- Manta -->
+      <path d="M25,130 Q100,105 175,130 L175,168 Q100,150 25,168 Z" fill="#c9a8ff" />
+      <path d="M25,130 Q100,105 175,130" fill="none" stroke="#b28cf0" stroke-width="3" />
+      <!-- Cabeza -->
+      <circle cx="100" cy="95" r="34" fill="#f3caa1" />
+      <!-- Mejillas -->
+      <circle cx="78" cy="102" r="6" fill="#ffb6c9" opacity="0.7" />
+      <circle cx="122" cy="102" r="6" fill="#ffb6c9" opacity="0.7" />
+      <!-- Ojos cerrados -->
+      <path d="M82,92 q6,6 12,0" fill="none" stroke="#6b4a35" stroke-width="2.5" stroke-linecap="round" />
+      <path d="M106,92 q6,6 12,0" fill="none" stroke="#6b4a35" stroke-width="2.5" stroke-linecap="round" />
+      <!-- Sonrisa suave -->
+      <path d="M92,110 q8,6 16,0" fill="none" stroke="#a86a4a" stroke-width="2" stroke-linecap="round" />
+      <!-- Rulos (cabello rizado alrededor de la cabeza) -->
+      <g fill="#6b4630">
+        <circle cx="64" cy="70" r="13" />
+        <circle cx="78" cy="58" r="14" />
+        <circle cx="96" cy="52" r="15" />
+        <circle cx="115" cy="55" r="14" />
+        <circle cx="132" cy="65" r="13" />
+        <circle cx="140" cy="82" r="11" />
+        <circle cx="60" cy="86" r="11" />
+        <circle cx="70" cy="98" r="9" />
+        <circle cx="130" cy="98" r="9" />
+      </g>
+      <!-- Corona pequeña -->
+      <path d="M84,48 l6,-14 6,9 4,-13 4,13 6,-9 6,14 Z" fill="#ffd27a" stroke="#e0a94a" stroke-width="1.5" />
+    </svg>
+    <span class="zzz">z</span>
+    <span class="zzz">z</span>
+    <span class="zzz">z</span>
+  `;
+
+  // Estrellas de fondo decorativas
+  const fondo = document.getElementById('estrellas-fondo');
+  for (let i = 0; i < 50; i++) {
+    const e = document.createElement('div');
+    e.className = 'estrella-fija';
+    const s = 1 + Math.random() * 2;
+    e.style.width = s + 'px';
+    e.style.height = s + 'px';
+    e.style.left = Math.random() * 100 + '%';
+    e.style.top = Math.random() * 90 + '%';
+    e.style.animationDelay = (Math.random() * 3) + 's';
+    fondo.appendChild(e);
+  }
+
+  const escenas = [...document.querySelectorAll('.escena')];
+  const puntos = [...document.querySelectorAll('.punto')];
+  const btnContinuar = document.getElementById('btn-continuar');
+  let pasoActual = 0;
+  const totalPasos = 5; // escenas 0 a 4 (la final no cuenta en los puntos)
+
+  function irAEscena(indice) {
+    escenas.forEach((esc, i) => esc.classList.toggle('activa', i === indice));
+    puntos.forEach((p, i) => {
+      p.classList.toggle('activo', i === indice);
+      p.classList.toggle('hecho', i < indice);
+    });
+    btnContinuar.classList.remove('visible');
+  }
+
+  function mostrarContinuar(callback) {
+    btnContinuar.classList.add('visible');
+    btnContinuar.onclick = () => {
+      btnContinuar.classList.remove('visible');
+      callback();
+    };
+  }
+
+  irAEscena(0);
+
+  // ---------- Escena 0: intro ----------
+  const musica = document.getElementById('musica-fondo');
+  document.getElementById('luna-inicio').addEventListener('click', () => {
+    musica.volume = 0.6;
+    musica.play().catch((e) => console.log('No se pudo reproducir el audio automáticamente:', e));
+    irAEscena(1);
+  }, { once: true });
+
+  // ---------- Escena 1: luces ----------
+  const focos = document.querySelectorAll('#fila-focos .foco');
+  let focosApagados = 0;
+  focos.forEach((foco) => {
+    foco.addEventListener('click', () => {
+      if (foco.classList.contains('apagado')) return;
+      foco.classList.add('apagado');
+      focosApagados++;
+      if (focosApagados === focos.length) {
+        setTimeout(() => irAEscena(2), 700);
+      }
+    });
+  });
+
+  // ---------- Escena 2: cortinas ----------
+  const ventana = document.getElementById('ventana');
+  ventana.addEventListener('click', () => {
+    ventana.querySelector('.cortina-izq').classList.add('cerrada');
+    ventana.querySelector('.cortina-der').classList.add('cerrada');
+    setTimeout(() => irAEscena(3), 1200);
+  }, { once: true });
+
+  // ---------- Escena 3: gatos ----------
+  const gatos = document.querySelectorAll('#zona-gatos .mascota');
+  let gatosArropados = 0;
+  gatos.forEach((m) => {
+    m.addEventListener('click', () => {
+      if (m.classList.contains('arropado')) return;
+      m.classList.add('arropado');
+      gatosArropados++;
+      if (gatosArropados === gatos.length) {
+        setTimeout(() => irAEscena(4), 800);
+      }
+    });
+  });
+
+  // ---------- Escena 4: perros ----------
+  const perros = document.querySelectorAll('#zona-perros .mascota');
+  let perrosArropados = 0;
+  perros.forEach((m) => {
+    m.addEventListener('click', () => {
+      if (m.classList.contains('arropado')) return;
+      m.classList.add('arropado');
+      perrosArropados++;
+      if (perrosArropados === perros.length) {
+        setTimeout(() => irAEscena(5), 800);
+      }
+    });
+  });
+
+  // ---------- Escena 5: peluches ----------
+  const peluches = document.querySelectorAll('#zona-peluches .peluche');
+  let peluchesArropados = 0;
+  peluches.forEach((p) => {
+    p.addEventListener('click', () => {
+      if (p.classList.contains('arropado')) return;
+      p.classList.add('arropado');
+      peluchesArropados++;
+      if (peluchesArropados === peluches.length) {
+        setTimeout(() => irAEscena(6), 800);
+      }
+    });
+  });
+
+  // ---------- Escena 4: ovejitas ----------
+  const cerca = document.getElementById('cerca-ovejas');
+  const contadorOvejas = document.getElementById('contador-ovejas');
+  const META_OVEJAS = 8;
+  let ovejasContadas = 0;
+  let ovejasActivas = 0;
+  const MAX_OVEJAS_SIMULTANEAS = 3;
+
+  function crearOveja() {
+    if (ovejasContadas >= META_OVEJAS) return;
+    if (ovejasActivas >= MAX_OVEJAS_SIMULTANEAS) return;
+
+    const oveja = document.createElement('div');
+    oveja.className = 'oveja';
+    oveja.textContent = '🐑';
+    oveja.style.left = (10 + Math.random() * 75) + '%';
+    oveja.style.animationDelay = (Math.random() * 0.6) + 's';
+    ovejasActivas++;
+
+    oveja.addEventListener('click', () => {
+      if (oveja.classList.contains('contada')) return;
+      oveja.classList.add('contada');
+      ovejasContadas++;
+      ovejasActivas--;
+      contadorOvejas.textContent = `${ovejasContadas} de ${META_OVEJAS}`;
+      setTimeout(() => oveja.remove(), 500);
+
+      if (ovejasContadas >= META_OVEJAS) {
+        setTimeout(() => mostrarEscenaFinal(), 900);
+      }
+    });
+
+    cerca.appendChild(oveja);
+  }
+
+  let intervaloOvejas = null;
+  function iniciarOvejas() {
+    intervaloOvejas = setInterval(() => {
+      if (ovejasContadas >= META_OVEJAS) {
+        clearInterval(intervaloOvejas);
+        return;
+      }
+      crearOveja();
+    }, 1000);
+  }
+
+  // Detectar cuándo se activa la escena de ovejas para iniciar el spawn
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('escena-6').classList.contains('activa') && !intervaloOvejas) {
+      iniciarOvejas();
+    }
+  });
+  observer.observe(document.getElementById('escena-6'), { attributes: true, attributeFilter: ['class'] });
+
+  // ---------- Escena final ----------
+  function lanzarEstrellasCayendo() {
+    for (let i = 0; i < 35; i++) {
+      setTimeout(() => {
+        const est = document.createElement('div');
+        est.className = 'estrella-caida';
+        est.textContent = ['✨', '⭐', '💫'][Math.floor(Math.random() * 3)];
+        est.style.left = (Math.random() * 100) + '%';
+        est.style.animationDuration = (3 + Math.random() * 2.5) + 's';
+        document.getElementById('juego').appendChild(est);
+        setTimeout(() => est.remove(), 6000);
+      }, i * 110);
+    }
+  }
+
+  function mostrarEscenaFinal() {
+    clearInterval(intervaloOvejas);
+    escenas.forEach((esc) => esc.classList.remove('activa'));
+    document.getElementById('progreso').style.display = 'none';
+    document.getElementById('escena-final').classList.add('activa');
+    lanzarEstrellasCayendo();
+  }
+</script>
+
+</body>
+</html>
